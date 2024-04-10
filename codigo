@@ -1,0 +1,85 @@
+import heapq
+
+class Llamada:
+    def __init__(self, nombre, edad, direccion, motivo, gravedad):
+        self.nombre = nombre
+        self.edad = edad
+        self.direccion = direccion 
+        self.motivo = motivo
+        self.gravedad = gravedad
+
+    def __lt__(self, other):
+        # Definimos el orden de comparación para las llamadas
+        if self.gravedad != other.gravedad:
+            return self.gravedad < other.gravedad
+        else:
+            # Si la gravedad es igual, priorizamos a los niños y adultos mayores
+            if self.gravedad == 1:
+                return self.edad < other.edad
+            elif self.gravedad == 2:
+                return self.edad > other.edad
+            else:
+                # Si la gravedad es 4, no hay distinción basada en la edad
+                return False
+
+    def __repr__(self):
+        return f"{self.nombre} - Gravedad: {self.gravedad}"
+
+
+class ColaPrioridad:
+    def __init__(self):
+        self.heap = []
+
+    def ingresar_llamada(self, llamada):
+        heapq.heappush(self.heap, llamada)
+
+    def pasar_siguiente_solicitud(self):
+        if self.heap:
+            return heapq.heappop(self.heap)
+        else:
+            return None
+
+    def mostrar_cola(self):
+        print("Cola de Prioridad:")
+        for llamada in self.heap:
+            print(llamada)
+
+
+cola = ColaPrioridad()
+
+while True:
+    print("\nMenú:")
+    print("1. Ingresar Llamada")
+    print("2. Pasar siguiente solicitud")
+    print("3. Mostrar la cola")
+    print("4. Salir")
+
+    opcion = input("Ingrese la opción deseada: ")
+
+    if opcion == '1':
+        nombre = input("Nombre completo: ")
+        edad = int(input("Edad: "))
+        direccion = input("Dirección: ")
+        motivo = input("Motivo de la llamada: ")
+        gravedad = int(input("Gravedad (1 a 5): "))
+        llamada = Llamada(nombre, edad, direccion, motivo, gravedad)
+        cola.ingresar_llamada(llamada)
+        print(f"{llamada.nombre} ha sido ingresado a la cola.")
+    elif opcion == '2':
+        siguiente = cola.pasar_siguiente_solicitud()
+        if siguiente:
+            print("Siguiente solicitud a ser atendida:")
+            print(f"Nombre: {siguiente.nombre}")
+            print(f"Edad: {siguiente.edad}")
+            print(f"Dirección: {siguiente.direccion}")
+            print(f"Motivo: {siguiente.motivo}")
+            print(f"Gravedad: {siguiente.gravedad}")
+        else:
+            print("No hay más solicitudes en la cola.")
+    elif opcion == '3':
+        cola.mostrar_cola()
+    elif opcion == '4':
+        print("Saliendo del programa...")
+        break
+    else:
+        print("Opción no válida. Por favor, ingrese una opción válida.")

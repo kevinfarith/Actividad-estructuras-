@@ -1,85 +1,132 @@
-import heapq
-
 class Llamada:
     def __init__(self, nombre, edad, direccion, motivo, gravedad):
         self.nombre = nombre
         self.edad = edad
-        self.direccion = direccion 
+        self.direccion = direccion
         self.motivo = motivo
         self.gravedad = gravedad
 
     def __lt__(self, other):
-        # Definimos el orden de comparación para las llamadas
-        if self.gravedad != other.gravedad:
-            return self.gravedad < other.gravedad
-        else:
-            # Si la gravedad es igual, priorizamos a los niños y adultos mayores
-            if self.gravedad == 1:
-                return self.edad < other.edad
-            elif self.gravedad == 2:
-                return self.edad > other.edad
-            else:
-                # Si la gravedad es 4, no hay distinción basada en la edad
+        if self.gravedad == other.gravedad:
+            if self.edad < 12:
+                return True
+            elif other.edad < 12:
                 return False
-
-    def __repr__(self):
-        return f"{self.nombre} - Gravedad: {self.gravedad}"
-
+            elif self.edad >= 65:
+                return False
+            elif other.edad >= 65:
+                return True
+            else:
+                return self.edad < other.edad
+        else:
+            return self.gravedad < other.gravedad
 
 class ColaPrioridad:
     def __init__(self):
-        self.heap = []
+        self.listaMonticulo = [0]
+        self.tamanoActual = 0
 
-    def ingresar_llamada(self, llamada):
-        heapq.heappush(self.heap, llamada)
+    def infiltArriba(self, i):
+        while i // 2 > 0:
+            if self.listaMonticulo[i] < self.listaMonticulo[i // 2]:
+                tmp = self.listaMonticulo[i // 2]
+                self.listaMonticulo[i // 2] = self.listaMonticulo[i]
+                self.listaMonticulo[i] = tmp
+            i = i // 2
 
-    def pasar_siguiente_solicitud(self):
-        if self.heap:
-            return heapq.heappop(self.heap)
+    def insertar(self, llamada):
+        self.listaMonticulo.append(llamada)
+        self.tamanoActual = self.tamanoActual + 1
+        self.infiltArriba(self.tamanoActual)
+
+    def infiltAbajo(self, i):
+        while (i * 2) <= self.tamanoActual:
+            hm = self.hijoMin(i)
+            if self.listaMonticulo[i] > self.listaMonticulo[hm]:
+                tmp = self.listaMonticulo[i]
+                self.listaMonticulo[i] = self.listaMonticulo[hm]
+                self.listaMonticulo[hm] = tmp
+            i = hm
+
+    def hijoMin(self, i):
+        if i * 2 + 1 > self.tamanoActual:
+            return i * 2
         else:
-            return None
+            if self.listaMonticulo[i * 2] < self.listaMonticulo[i * 2 + 1]:
+                return i * 2
+            else:
+                return i * 2 + 1
 
-    def mostrar_cola(self):
-        print("Cola de Prioridad:")
-        for llamada in self.heap:
-            print(llamada)
+    def eliminarMin(self):
+        valorSacado = self.listaMonticulo[1]
+        self.listaMonticulo[1] = self.listaMonticulo[self.tamanoActual]
+        self.tamanoActual = self.tamanoActual - 1
+        self.listaMonticulo.pop()
+        self.infiltAbajo(1)
+        return valorSacado
 
+    def construirMonticulo(self, unaLista):
+        i = len(unaLista) // 2
+        self.tamanoActual = len(unaLista)
+        self.listaMonticulo = [0] + unaLista[:]
+        while (i > 0):
+            self.infiltAbajo(i)
+            i = i - 1
 
-cola = ColaPrioridad()
-
-while True:
+def mostrar_menu():
     print("\nMenú:")
     print("1. Ingresar Llamada")
     print("2. Pasar siguiente solicitud")
     print("3. Mostrar la cola")
     print("4. Salir")
 
-    opcion = input("Ingrese la opción deseada: ")
+def ingresar_llamada(cola):
+    nombre = input("Ingrese el nombre completo: ")
+    edad = int(input("Ingrese la edad: "))
+    direccion = input("Ingrese la dirección: ")
+    motivo = input("Ingrese el motivo de la llamada: ")
+    gravedad = int(input("Ingrese la gravedad (1-5): "))
+    llamada = Llamada(nombre, edad, direccion, motivo, gravedad)
+    cola.insertar(llamada)
+    print("La llamada ha sido registrada en la posición", cola.tamanoActual)
 
-    if opcion == '1':
-        nombre = input("Nombre completo: ")
-        edad = int(input("Edad: "))
-        direccion = input("Dirección: ")
-        motivo = input("Motivo de la llamada: ")
-        gravedad = int(input("Gravedad (1 a 5): "))
-        llamada = Llamada(nombre, edad, direccion, motivo, gravedad)
-        cola.ingresar_llamada(llamada)
-        print(f"{llamada.nombre} ha sido ingresado a la cola.")
-    elif opcion == '2':
-        siguiente = cola.pasar_siguiente_solicitud()
-        if siguiente:
-            print("Siguiente solicitud a ser atendida:")
-            print(f"Nombre: {siguiente.nombre}")
-            print(f"Edad: {siguiente.edad}")
-            print(f"Dirección: {siguiente.direccion}")
-            print(f"Motivo: {siguiente.motivo}")
-            print(f"Gravedad: {siguiente.gravedad}")
-        else:
-            print("No hay más solicitudes en la cola.")
-    elif opcion == '3':
-        cola.mostrar_cola()
-    elif opcion == '4':
-        print("Saliendo del programa...")
-        break
+def pasar_siguiente_solicitud(cola):
+    if cola.tamanoActual > 0:
+        llamada = cola.eliminarMin()
+        print("Siguiente solicitud a atender:")
+        print("Nombre:", llamada.nombre)
+        print("Edad:", llamada.edad)
+        print("Dirección:", llamada.direccion)
+        print("Motivo:", llamada.motivo)
+        print("Gravedad:", llamada.gravedad)
     else:
-        print("Opción no válida. Por favor, ingrese una opción válida.")
+        print("No hay solicitudes en la cola")
+
+def mostrar_cola(cola):
+    if cola.tamanoActual > 0:
+        print("Cola de atención en este momento:")
+        for i in range(1, cola.tamanoActual + 1):
+            llamada = cola.listaMonticulo[i]
+            print(f"Posición {i}: {llamada.nombre}, Gravedad: {llamada.gravedad}, Edad: {llamada.edad}")
+    else:
+        print("No hay solicitudes en la cola")
+
+def main():
+    cola_prioridad = ColaPrioridad()
+    while True:
+        mostrar_menu()
+        opcion = input("Seleccione una opción: ")
+        if opcion == "1":
+            ingresar_llamada(cola_prioridad)
+        elif opcion == "2":
+            pasar_siguiente_solicitud(cola_prioridad)
+        elif opcion == "3":
+            mostrar_cola(cola_prioridad)
+        elif opcion == "4":
+            print("Saliendo del programa...")
+            break
+        else:
+            print("Opción no válida. Por favor, seleccione una opción válida.")
+
+if __name__ == "__main__":
+    main()
